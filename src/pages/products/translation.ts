@@ -1,0 +1,51 @@
+export const texts: any = {
+  en: {
+    products: "Our work",
+    addProduct: "Add new work",
+    allCategories: "All Categories",
+    minPrice: "Min Price",
+    maxPrice: "Max Price",
+    allStock: "All Stock",
+    inStock: "In Stock",
+    lowStock: "Low Stock",
+    outOfStock: "Out of Stock",
+    searchProducts: "Search products...",
+    name: "Name",
+    variants: "Variants",
+    category: "Category",
+    stock: "Stock",
+    status: "Status",
+    price: "Price",
+    cancel: "Cancel",
+    create: "Create",
+    uploading: "Uploading...",
+    creating: "Creating...",
+    productName: "Product Name",
+    productDescription: "Product Description",
+    productPrice: "Product Price",
+    productBrand: "Product Brand (optional)",
+    selectCategory: "Select a category",
+    productStock: "Product Stock",
+    noProductsFound: "No products found.",
+  },
+  ar: {
+    products: "أعمالنا",
+    addProduct: "إضافة عمل جديد",
+    allCategories: "جميع الفئات",
+
+    name: "الاسم",
+
+    category: "الفئة",
+
+    cancel: "إلغاء",
+    create: "إنشاء",
+    uploading: "جارٍ الرفع...",
+    creating: "جارٍ الإنشاء...",
+    productName: "اسم المنتج",
+    productDescription: "وصف المنتج",
+
+    selectCategory: "اختر الفئة",
+
+    noProductsFound: "لا توجد منتجات.",
+  },
+};
