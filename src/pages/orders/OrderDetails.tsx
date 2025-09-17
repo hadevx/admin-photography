@@ -3,6 +3,7 @@ import {
   useGetOrderQuery,
   useUpdateOrderToDeliverdMutation,
   useUpdateOrderToCanceledMutation,
+  useUpdateOrderToConfirmedMutation,
 } from "../../redux/queries/orderApi";
 import { useParams } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -18,10 +19,13 @@ import { useSelector } from "react-redux";
 function OrderDetails() {
   const { orderId } = useParams();
   const { data: order, isLoading, refetch } = useGetOrderQuery(orderId);
+
   console.log(order);
+
   const [updateOrderToDeliverd, { isLoading: loadingDelivered }] =
     useUpdateOrderToDeliverdMutation();
   const [updateOrderToCanceled, { isLoading: isCanceled }] = useUpdateOrderToCanceledMutation();
+  const [updateOrderToConfirmed] = useUpdateOrderToConfirmedMutation();
 
   const language = useSelector((state: any) => state.language.lang); // 'ar' or 'en'
   const dir = language === "ar" ? "rtl" : "ltr";
@@ -29,6 +33,16 @@ function OrderDetails() {
   const handleUpdateOrderToDelivered = async () => {
     try {
       await updateOrderToDeliverd(orderId).unwrap();
+      toast.success(language === "ar" ? "تم التحديث إلى مكتمل" : "Order marked as completed");
+      refetch();
+    } catch (error) {
+      toast.error(language === "ar" ? "فشل التحديث" : "Failed to update order");
+    }
+  };
+
+  const handleUpdateOrderToConfirmed = async () => {
+    try {
+      await updateOrderToConfirmed(orderId).unwrap();
       toast.success(language === "ar" ? "تم التحديث إلى مكتمل" : "Order marked as completed");
       refetch();
     } catch (error) {
@@ -79,6 +93,23 @@ function OrderDetails() {
                     ? "تعيين كمكتمل"
                     : "Mark as completed"}
                 </button>
+                <button
+                  disabled={order?.isCompleted || order?.isCanceled || loadingDelivered}
+                  onClick={handleUpdateOrderToConfirmed}
+                  className={clsx(
+                    "px-3 py-2 rounded-lg font-bold transition-all",
+                    order?.isCompleted || order?.isCanceled || order?.isConfirmed
+                      ? "bg-gray-200 text-gray-600 pointer-events-none"
+                      : "bg-blue-500 text-white hover:bg-blue-600"
+                  )}>
+                  {loadingDelivered
+                    ? language === "ar"
+                      ? "جارٍ التحديث..."
+                      : "Updating..."
+                    : language === "ar"
+                    ? "تم تأكيد الحجز"
+                    : "Reservation Confirmed"}
+                </button>
 
                 {isCanceled ? (
                   <Loader2Icon className="animate-spin" />
@@ -111,7 +142,7 @@ function OrderDetails() {
 
             {order && (
               <div className="text-sm bg-white border rounded-lg p-6">
-                <h2>{order?._id}</h2>
+                {/* <h2>{order?._id}</h2> */}
                 {/* User Info */}
                 <h2 className="text-lg font-semibold mb-4">
                   {language === "ar" ? "معلومات العميل" : "Customer Info"}
@@ -144,75 +175,92 @@ function OrderDetails() {
                     {order.user.age}
                   </div>
                 </div>
-
-                {/* Booking Info */}
-                <h2 className="text-lg font-semibold mb-4">
-                  {language === "ar" ? "معلومات الحجز" : "Booking Info"}
-                </h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-gray-700">
-                  <div>
-                    <span className="font-semibold">{language === "ar" ? "الباقه:" : "Plan:"}</span>{" "}
-                    {order.plan?.name}
-                  </div>
-                  <div>
-                    <span className="font-semibold">
-                      {language === "ar" ? "الموقع:" : "Location:"}
-                    </span>{" "}
-                    {order.location}
-                  </div>
-                  <div>
-                    <span className="font-semibold">
-                      {language === "ar" ? "التاريخ:" : "Date:"}
-                    </span>{" "}
-                    {new Date(order.bookingDate).toLocaleDateString()}
-                  </div>
-                  <div>
-                    <span className="font-semibold">{language === "ar" ? "الوقت:" : "Time:"}</span>{" "}
-                    {order.slot?.startTime} - {order.slot?.endTime}
-                  </div>
-                  <div>
-                    <span className="font-semibold">
-                      {language === "ar" ? "عدد الأشخاص:" : "People:"}
-                    </span>{" "}
-                    {order.numberOfPeople}
-                  </div>
-                  <div>
-                    <span className="font-semibold">
-                      {language === "ar" ? "الملاحظات:" : "Notes:"}
-                    </span>{" "}
-                    {order.notes || "-"}
-                  </div>
-                  <div>
-                    <span className="font-semibold">
-                      {language === "ar" ? "المقدم:" : "Down Payment:"}
-                    </span>{" "}
-                    {order.downPayment?.toFixed(3)} KD
-                  </div>
-                  <div>
-                    <span className="font-semibold">
-                      {language === "ar" ? "السعر الكلي:" : "Total Price:"}
-                    </span>{" "}
-                    {order.price?.toFixed(3)} KD
-                  </div>
-                </div>
-
-                {/* Status */}
-                <div className="mt-6 flex items-center gap-2">
-                  <span className="font-semibold">{language === "ar" ? "الحالة:" : "Status:"}</span>{" "}
-                  {order.isCanceled ? (
-                    <Badge variant="danger">{language === "ar" ? "ملغي" : "Canceled"}</Badge>
-                  ) : order.isCompleted ? (
-                    <Badge variant="success">{language === "ar" ? "مكتمل" : "Completed"}</Badge>
-                  ) : order.isPaid ? (
-                    <Badge variant="success">{language === "ar" ? "مدفوع" : "Paid"}</Badge>
-                  ) : (
-                    <Badge variant="pending">
-                      {language === "ar" ? "قيد المعالجة" : "Processing"}
-                    </Badge>
-                  )}
-                </div>
               </div>
             )}
+            <div className="text-sm mt-3 bg-white border rounded-lg p-6">
+              {/* Booking Info */}
+              <h2 className="text-lg font-semibold mb-4">
+                {language === "ar" ? "معلومات الحجز" : "Booking Info"}
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-gray-700">
+                <div>
+                  <span className="font-semibold">{language === "ar" ? "الباقه:" : "Plan:"}</span>{" "}
+                  {order.plan?.name}
+                </div>
+                <div>
+                  <span className="font-semibold">
+                    {language === "ar" ? "الموقع:" : "Location:"}
+                  </span>{" "}
+                  {order.location}
+                </div>
+                <div>
+                  <span className="font-semibold">{language === "ar" ? "التاريخ:" : "Date:"}</span>{" "}
+                  {new Date(order.bookingDate).toLocaleDateString()}
+                </div>
+                <div className="flex  ">
+                  <span className="font-semibold">{language === "ar" ? "الوقت:" : "Time:"}</span>{" "}
+                  <div className="" dir="ltr">
+                    {order.slot?.startTime} - {order.slot?.endTime}
+                  </div>
+                </div>
+                <div>
+                  <span className="font-semibold">
+                    {language === "ar" ? "عدد الأشخاص:" : "People:"}
+                  </span>{" "}
+                  {order.numberOfPeople}
+                </div>
+                <div>
+                  <span className="font-semibold">
+                    {language === "ar" ? "الملاحظات:" : "Notes:"}
+                  </span>{" "}
+                  {order.notes || "-"}
+                </div>
+                <div>
+                  <span className="font-semibold">
+                    {language === "ar" ? "المقدم:" : "Down Payment:"}
+                  </span>{" "}
+                  {order.downPayment?.toFixed(3)} KD
+                </div>
+
+                <div>
+                  <span className="font-semibold">
+                    {language === "ar" ? "السعر الكلي:" : "Total Price:"}
+                  </span>{" "}
+                  {order.price?.toFixed(3)} KD
+                </div>
+                <div className="">
+                  <span className="font-semibold">
+                    {language === "ar" ? "الاضافات:" : "AddOns:"}
+                  </span>{" "}
+                  {order?.selectedAddOns.map((addOn: any) => (
+                    <div className="flex  gap-2 ">
+                      <span className="">{addOn.name}</span>
+                      <span className="">{addOn.price.toFixed(3)} KD</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Status */}
+              <div className="mt-6 flex items-center gap-2">
+                <span className="font-semibold">{language === "ar" ? "الحالة:" : "Status:"}</span>{" "}
+                {order.isCanceled ? (
+                  <Badge variant="danger">{language === "ar" ? "ملغي" : "Canceled"}</Badge>
+                ) : order.isCompleted ? (
+                  <Badge variant="success" icon={false}>
+                    {language === "ar" ? "مكتمل" : "Completed"}
+                  </Badge>
+                ) : order.isConfirmed ? (
+                  <Badge icon={false}>
+                    {language === "ar" ? "تم تأكيد الحجز" : "Reservation Confirmed"}
+                  </Badge>
+                ) : (
+                  <Badge variant="pending">
+                    {language === "ar" ? "قيد المعالجة" : "Processing"}
+                  </Badge>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       )}

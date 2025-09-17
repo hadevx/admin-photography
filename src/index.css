@@ -10,9 +10,15 @@ button {
   cursor: pointer;
 }
 @font-face {
-  font-family: "Almohand"; /* name you'll use in CSS */
-  src: url("./assets//AL-Mohanad-Extra-Bold.ttf") format("ttf");
-  font-weight: 400; /* normal */
+  font-family: "Almohand";
+  src: url("./assets/AL-Mohanad-Extra-Bold.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+}
+@font-face {
+  font-family: "Arabiya";
+  src: url("./assets/khalaad-al-arabeh.ttf") format("truetype");
+  font-weight: 400;
   font-style: normal;
 }
 

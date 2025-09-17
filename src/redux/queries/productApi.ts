@@ -99,22 +99,6 @@ export const productApi = api.injectEndpoints({
       }),
       invalidatesTags: ["Product"],
     }),
-    updateProductVariant: builder.mutation({
-      query: ({ productId, variantId, color, sizes, images }) => ({
-        url: `/api/products/variant/${productId}`,
-        method: "PUT",
-        body: { variantId, color, sizes, images },
-      }),
-      invalidatesTags: ["Product"],
-    }),
-    deleteProductVariant: builder.mutation({
-      query: ({ productId, variantId }) => ({
-        url: `/api/products/variant/${productId}`,
-        method: "DELETE",
-        body: { variantId },
-      }),
-      invalidatesTags: ["Product"],
-    }),
 
     deleteImage: builder.mutation({
       query: (data) => ({
@@ -193,6 +177,4 @@ export const {
   useUploadCategoryImageMutation,
   useUpdateCategoryMutation,
   useUploadVariantImageMutation,
-  useUpdateProductVariantMutation,
-  useDeleteProductVariantMutation,
 } = productApi;

@@ -30,6 +30,8 @@ function UserDetails() {
   const language = useSelector((state: any) => state.language.lang); // 'ar' | 'en'
 
   const { data: userOrders } = useGetUserOrdersQuery(userID);
+  console.log(userOrders);
+
   const { data: user, isLoading: loadingUser } = useGetUserDetailsQuery<any>(userID);
   const [deleteUser, { isLoading: loadingDeleteUser }] = useDeleteUserMutation();
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -172,15 +174,7 @@ function UserDetails() {
                         </span>
                         <span className="font-bold">{order.createdAt.substring(0, 10)}</span>
                       </div>
-                      <div
-                        className={`flex gap-2 flex-wrap  ${
-                          language === "ar" ? "flex-col items-center" : ""
-                        }`}>
-                        <span className="text-gray-700 ">
-                          {language === "ar" ? "طريقة الدفع:" : "Payment method:"}
-                        </span>
-                        <span className="font-bold break-words">{order.paymentMethod}</span>
-                      </div>
+
                       <div
                         className={`flex gap-2 flex-wrap ${
                           language === "ar" ? "flex-col items-center" : ""
@@ -188,17 +182,9 @@ function UserDetails() {
                         <span className="text-gray-700">
                           {language === "ar" ? "السعر الإجمالي:" : "Total price:"}
                         </span>
-                        <span className="font-bold">{order.totalPrice.toFixed(3)} KD</span>
+                        <span className="font-bold">{order.price.toFixed(3)} KD</span>
                       </div>
-                      <div
-                        className={`flex gap-2 flex-wrap ${
-                          language === "ar" ? "flex-col items-center" : ""
-                        }`}>
-                        <span className="text-gray-700">
-                          {language === "ar" ? "المنتجات:" : "Products:"}
-                        </span>
-                        <span className="font-bold">{order?.orderItems.length}</span>
-                      </div>
+
                       <div
                         className={`flex gap-2 flex-wrap ${
                           language === "ar" ? "flex-col items-center" : ""
@@ -208,11 +194,19 @@ function UserDetails() {
                         </span>
                         <span className="font-bold">
                           {order?.isDelivered ? (
-                            <Badge variant="success">
-                              {language === "ar" ? "تم التوصيل" : "Delivered"}
+                            <Badge variant="success" icon={false}>
+                              {language === "ar" ? "طلب مكتمل" : "Completed"}
+                            </Badge>
+                          ) : order?.isConfirmed ? (
+                            <Badge icon={false}>
+                              {language === "ar" ? "تم تأكيد الحجز" : "Reservation Confirmed"}
+                            </Badge>
+                          ) : order?.isCanceled ? (
+                            <Badge variant="danger" icon={false}>
+                              {language === "ar" ? "تم الالغاء" : "Canceled"}
                             </Badge>
                           ) : (
-                            <Badge variant="pending">
+                            <Badge variant="pending" icon={false}>
                               {language === "ar" ? "قيد المعالجة" : "Processing"}
                             </Badge>
                           )}

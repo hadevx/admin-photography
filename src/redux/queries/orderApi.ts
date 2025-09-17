@@ -34,6 +34,13 @@ export const orderApi = api.injectEndpoints({
       }),
       invalidatesTags: ["Order"],
     }),
+    updateOrderToConfirmed: builder.mutation({
+      query: (orderId) => ({
+        url: `/api/orders/${orderId}/confirm`,
+        method: "PUT",
+      }),
+      invalidatesTags: ["Order"],
+    }),
     updateOrderToCanceled: builder.mutation({
       query: (orderId) => ({
         url: `/api/orders/${orderId}/cancel`,
@@ -63,4 +70,5 @@ export const {
   useUpdateOrderToCanceledMutation,
   useGetOrderStatsQuery,
   useGetRevenuStatsQuery,
+  useUpdateOrderToConfirmedMutation,
 } = orderApi;

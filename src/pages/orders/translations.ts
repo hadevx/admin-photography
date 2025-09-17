@@ -1,7 +1,7 @@
 export const texts: any = {
   en: {
-    orders: "Orders",
-    searchPlaceholder: "Search by ID, Name, or Payment",
+    orders: "Reservations",
+    searchPlaceholder: "Search by ID",
     revenue: "Revenue",
     itemsSold: "Items Sold",
     orderId: "Id",
@@ -19,8 +19,8 @@ export const texts: any = {
     people: "Peolpe",
   },
   ar: {
-    orders: "الطلبات",
-    searchPlaceholder: "ابحث بالرقم، الاسم، أو طريقة الدفع",
+    orders: "الحجوزات",
+    searchPlaceholder: "ابحث بالرقم ",
     revenue: "الإيرادات",
     itemsSold: " العناصر المباعة",
     orderId: "رقم الطلب",
@@ -36,5 +36,6 @@ export const texts: any = {
     processing: "قيد المعالجة",
     noOrders: "لا توجد طلبات مطابقة.",
     people: "ألاشخاص",
+    confirmed: "تم تأكيد الحجز",
   },
 };
