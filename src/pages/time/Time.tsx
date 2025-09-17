@@ -195,7 +195,7 @@ const TimeManagement = () => {
                 format="YYYY-MM-DD"
                 minDate={new Date()}
                 inputClass="hidden" // hides default input
-                render={(value, openCalendar) => (
+                render={(_, openCalendar) => (
                   <button
                     type="button"
                     onClick={openCalendar}
