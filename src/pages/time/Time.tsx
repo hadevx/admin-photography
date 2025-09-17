@@ -19,6 +19,9 @@ import {
 import { toast } from "react-toastify";
 import Badge from "@/components/Badge";
 
+// ✅ Multi-date picker
+import DatePicker from "react-multi-date-picker";
+
 const TimeManagement = () => {
   const { data: times } = useGetTimeQuery(undefined);
   const [createTime] = useCreateTimeMutation();
@@ -28,14 +31,13 @@ const TimeManagement = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTimeId, setEditingTimeId] = useState<string | null>(null);
 
-  const [date, setDate] = useState("");
+  const [selectedDates, setSelectedDates] = useState<any[]>([]);
   const [timeSlots, setTimeSlots] = useState<{ startTime: string; endTime: string }[]>([]);
   const [page, setPage] = useState(1);
 
-  console.log(date);
   // Open modal for adding or editing
   const openModalForAdd = () => {
-    setDate("");
+    setSelectedDates([]);
     setTimeSlots([]);
     setEditingTimeId(null);
     setIsModalOpen(true);
@@ -43,7 +45,7 @@ const TimeManagement = () => {
 
   const handleEdit = (time: any) => {
     setEditingTimeId(time._id);
-    setDate(time.date?.slice(0, 10));
+    setSelectedDates([time.date?.slice(0, 10)]); // keep it single on edit
     setTimeSlots(
       time.times?.map((t: any) => ({ startTime: t.startTime, endTime: t.endTime })) || []
     );
@@ -51,8 +53,8 @@ const TimeManagement = () => {
   };
 
   const handleAddOrUpdateTime = async () => {
-    if (!date || timeSlots.length === 0) {
-      toast.error("Date and at least one time slot are required");
+    if (!selectedDates.length || timeSlots.length === 0) {
+      toast.error("At least one date and one time slot are required");
       return;
     }
 
@@ -65,14 +67,24 @@ const TimeManagement = () => {
 
     try {
       if (editingTimeId) {
-        await updateTime({ id: editingTimeId, date, times: timeSlots }).unwrap();
+        await updateTime({
+          id: editingTimeId,
+          date: selectedDates[0], // editing one date at a time
+          times: timeSlots,
+        }).unwrap();
         toast.success("Time slots updated");
       } else {
-        await createTime({ date, times: timeSlots }).unwrap();
+        // loop over all selected dates and create them
+        for (const d of selectedDates) {
+          await createTime({
+            date: typeof d === "string" ? d : d.format("YYYY-MM-DD"),
+            times: timeSlots,
+          }).unwrap();
+        }
         toast.success("Time slots added");
       }
 
-      setDate("");
+      setSelectedDates([]);
       setTimeSlots([]);
       setEditingTimeId(null);
       setIsModalOpen(false);
@@ -90,8 +102,6 @@ const TimeManagement = () => {
     }
   };
 
-  console.log(times);
-
   return (
     <Layout>
       <div className="px-4 flex flex-col w-4xl min-h-screen py-3 mt-[70px]">
@@ -102,177 +112,179 @@ const TimeManagement = () => {
           </Button>
         </div>
 
-        <div className="rounded-lg border mt-4 p-5 bg-white overflow-x-auto">
-          <table className="w-full text-sm text-left">
-            <thead>
-              <tr className="">
-                <th className="px-4 py-3">Day</th>
-                <th className="px-4 py-3">Date</th>
-                <th className="px-4 py-3">Time</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {times?.length ? (
-                times.map((time: any) => {
-                  const slotCount = time.times?.length || 1; // number of slots for this date
-                  const d = new Date(time.date);
-                  const dayNames = [
-                    "Sunday",
-                    "Monday",
-                    "Tuesday",
-                    "Wednesday",
-                    "Thursday",
-                    "Friday",
-                    "Saturday",
-                  ];
-                  const dayName = dayNames[d.getDay()];
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 mt-4">
+          {times?.length ? (
+            times.map((time: any) => {
+              const d = new Date(time.date);
+              const dayNames = [
+                "Sunday",
+                "Monday",
+                "Tuesday",
+                "Wednesday",
+                "Thursday",
+                "Friday",
+                "Saturday",
+              ];
+              const dayName = dayNames[d.getDay()];
 
-                  return time.times?.map((slot: any, i: number) => (
-                    <tr key={`${time._id}-${i}`} className="border-t">
-                      {/* Show the day only for the first slot */}
-                      {i === 0 && (
-                        <td className="px-4 py-3 font-semibold" rowSpan={slotCount}>
-                          {dayName} {/* Day name */}
-                        </td>
-                      )}
-
-                      {/* Show the date only for the first slot */}
-                      {i === 0 && (
-                        <td className="px-4 py-3 font-semibold" rowSpan={slotCount}>
-                          {time.date?.slice(0, 10)}
-                        </td>
-                      )}
-
-                      <td className="px-4 py-3">
-                        {slot.startTime} - {slot.endTime}
-                      </td>
-
-                      <td className="px-4 py-3 font-semibold rounded-md">
-                        {slot.reserved ? (
-                          <Badge icon={false}>Reserved</Badge>
-                        ) : (
-                          <Badge icon={false} variant="success">
-                            Available
-                          </Badge>
-                        )}
-                      </td>
-
-                      <td className="px-4 py-3 flex gap-2">
-                        {i === 0 && (
-                          <Button variant="outline" size="sm" onClick={() => handleEdit(time)}>
-                            <Edit2 size={16} />
-                          </Button>
-                        )}
-                        {i === 0 && (
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => handleDeleteTime(time._id)}>
-                            <Trash2 size={16} />
-                          </Button>
-                        )}
-                      </td>
-                    </tr>
-                  ));
-                })
-              ) : (
-                <tr>
-                  <td colSpan={6} className="px-4 py-6 text-center text-gray-500">
-                    No time periods found
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-          <Paginate page={page} pages={1} setPage={setPage} />
-        </div>
-
-        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-          <DialogContent className="max-w-lg w-full overflow-y-auto max-h-[90vh]">
-            <DialogHeader>
-              <DialogTitle>{editingTimeId ? "Edit Time" : "Add Time"}</DialogTitle>
-            </DialogHeader>
-
-            <div className="flex flex-col gap-6 mt-4">
-              {/* Date Input */}
-              <div className="flex flex-col">
-                <label className="font-semibold mb-1">Date</label>
-                <input
-                  type="date"
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                  className="p-2 border rounded-md w-full"
-                />
-              </div>
-
-              {/* Time Slots */}
-              <div className="flex flex-col gap-4">
-                {timeSlots.map((slot, index) => (
-                  <div
-                    key={index}
-                    className="grid grid-cols-3 gap-4 items-end bg-gray-50 p-3 rounded-md border">
-                    <div className="flex flex-col">
-                      <label className="font-semibold mb-1">Start Time</label>
-                      <input
-                        type="text"
-                        value={slot.startTime}
-                        onChange={(e) => {
-                          const newSlots = [...timeSlots];
-                          newSlots[index].startTime = e.target.value;
-                          setTimeSlots(newSlots);
-                        }}
-                        className="p-2 border rounded-md w-full"
-                      />
+              return (
+                <div key={time._id} className="bg-white rounded-lg  p-4 flex flex-col gap-3 border">
+                  {/* Day & Date */}
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <p className="font-semibold text-gray-700">{dayName}</p>
+                      <p className="text-gray-500">{time.date?.slice(0, 10)}</p>
                     </div>
-                    <div className="flex flex-col">
-                      <label className="font-semibold mb-1">End Time</label>
-                      <input
-                        type="text"
-                        value={slot.endTime}
-                        onChange={(e) => {
-                          const newSlots = [...timeSlots];
-                          newSlots[index].endTime = e.target.value;
-                          setTimeSlots(newSlots);
-                        }}
-                        className="p-2 border rounded-md w-full"
-                      />
-                    </div>
-                    <div className="flex justify-end">
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" onClick={() => handleEdit(time)}>
+                        <Edit2 size={16} />
+                      </Button>
                       <Button
                         variant="destructive"
                         size="sm"
-                        onClick={() => {
-                          const newSlots = [...timeSlots];
-                          newSlots.splice(index, 1);
-                          setTimeSlots(newSlots);
-                        }}>
-                        Delete
+                        onClick={() => handleDeleteTime(time._id)}>
+                        <Trash2 size={16} />
                       </Button>
                     </div>
                   </div>
-                ))}
 
-                {/* Add Another Time */}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setTimeSlots([...timeSlots, { startTime: "", endTime: "" }])}>
-                  Add Another Time
-                </Button>
-              </div>
+                  {/* Time Slots */}
+                  <div className="flex flex-col gap-2">
+                    {time.times?.map((slot: any, idx: number) => (
+                      <div
+                        key={idx}
+                        className="flex justify-between items-center bg-gray-50 p-2 rounded-md border">
+                        <span className="text-gray-700 font-medium">
+                          {slot.startTime} - {slot.endTime}
+                        </span>
+                        <Badge
+                          icon={false}
+                          variant={slot.reserved ? "danger" : "success"}
+                          className="p-1 rounded-full text-sm">
+                          {slot.reserved ? "Reserved" : "Available"}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })
+          ) : (
+            <p className="text-center text-gray-500 py-6">No time periods found</p>
+          )}
+
+          {/* Pagination */}
+          <Paginate page={page} pages={1} setPage={setPage} />
+        </div>
+      </div>
+      {/* Modal */}
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent className="max-w-lg w-full overflow-y-auto min-h-[50vh] max-h-[90vh]">
+          <DialogHeader>
+            <DialogTitle>{editingTimeId ? "Edit Time" : "Add Time"}</DialogTitle>
+          </DialogHeader>
+
+          <div className="flex flex-col gap-6 mt-4">
+            {/* Multi-Date Picker */}
+            <div className="flex flex-col">
+              <label className="font-semibold mb-1">Select Dates</label>
+              <DatePicker
+                multiple
+                value={selectedDates}
+                onChange={setSelectedDates}
+                format="YYYY-MM-DD"
+                minDate={new Date()}
+                inputClass="hidden" // hides default input
+                render={(value, openCalendar) => (
+                  <button
+                    type="button"
+                    onClick={openCalendar}
+                    className="px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800 transition">
+                    {selectedDates.length > 0
+                      ? `Select Dates (${selectedDates.length})`
+                      : "Select Dates"}
+                  </button>
+                )}
+              />
+
+              {/* Selected dates as chips */}
+              {selectedDates.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-3">
+                  {selectedDates.map((date, idx) => (
+                    <span
+                      key={idx}
+                      className="px-3 py-1 bg-teal-50 border border-teal-500 text-teal-500 rounded-full text-sm font-medium">
+                      {date.format("YYYY-MM-DD")}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
 
-            <DialogFooter className="mt-6 flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setIsModalOpen(false)}>
-                Cancel
+            {/* Time Slots */}
+            <div className="flex flex-col gap-4">
+              {timeSlots.map((slot, index) => (
+                <div
+                  key={index}
+                  className="grid grid-cols-3 gap-4 items-end bg-gray-50 p-3 rounded-md border">
+                  <div className="flex flex-col">
+                    <label className="font-semibold mb-1">Start Time</label>
+                    <input
+                      type="text"
+                      value={slot.startTime}
+                      onChange={(e) => {
+                        const newSlots = [...timeSlots];
+                        newSlots[index].startTime = e.target.value;
+                        setTimeSlots(newSlots);
+                      }}
+                      className="p-2 border rounded-md w-full"
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    <label className="font-semibold mb-1">End Time</label>
+                    <input
+                      type="text"
+                      value={slot.endTime}
+                      onChange={(e) => {
+                        const newSlots = [...timeSlots];
+                        newSlots[index].endTime = e.target.value;
+                        setTimeSlots(newSlots);
+                      }}
+                      className="p-2 border rounded-md w-full"
+                    />
+                  </div>
+                  <div className="flex justify-end">
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => {
+                        const newSlots = [...timeSlots];
+                        newSlots.splice(index, 1);
+                        setTimeSlots(newSlots);
+                      }}>
+                      <Trash2 />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setTimeSlots([...timeSlots, { startTime: "", endTime: "" }])}>
+                Add Another Time
               </Button>
-              <Button onClick={handleAddOrUpdateTime}>{editingTimeId ? "Update" : "Add"}</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
+            </div>
+          </div>
+
+          <DialogFooter className="mt-6 flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setIsModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleAddOrUpdateTime}>{editingTimeId ? "Update" : "Create"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 };
